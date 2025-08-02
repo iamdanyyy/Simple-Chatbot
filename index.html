@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple ML Chatbot</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .chatbot-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 70%;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .bot-message {
+            background: #e9ecef;
+            color: #333;
+            margin-right: auto;
+        }
+        
+        .input-container {
+            display: flex;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+        
+        #userInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+        }
+        
+        #userInput:focus {
+            border-color: #007bff;
+        }
+        
+        #sendBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        #sendBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: #e9ecef;
+            border-radius: 18px;
+            margin: 10px 0;
+            max-width: 70%;
+        }
+        
+        .typing-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+        
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #999;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chat-header">
+            <h2>🤖 Simple ML Chatbot</h2>
+            <p>Learning the fundamentals of intelligent conversation</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                Hello! I'm a simple chatbot that demonstrates basic ML concepts. Try asking me about:
+                <br>• Weather or time
+                <br>• Math calculations  
+                <br>• My favorite things
+                <br>• How I work
+                <br><br>I learn patterns from our conversation!
+            </div>
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Type your message here..." maxlength="200">
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+        
+        <div class="stats">
+            <span>Confidence: <span id="confidence">85%</span></span>
+            <span>Messages: <span id="messageCount">1</span></span>
+            <span>Learning Mode: Active</span>
+        </div>
+    </div>
+
+    <script>
+        // Simple ML-inspired chatbot implementation
+        class SimpleChatbot {
+            constructor() {
+                // Training data - patterns and responses
+                this.trainingData = {
+                    greetings: {
+                        patterns: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'howdy'],
+                        responses: [
+                            "Hello! How can I help you today?",
+                            "Hi there! What would you like to chat about?",
+                            "Hey! I'm excited to talk with you!",
+                            "Greetings! What's on your mind?"
+                        ]
+                    },
+                    weather: {
+                        patterns: ['weather', 'temperature', 'hot', 'cold', 'sunny', 'rain', 'snow'],
+                        responses: [
+                            "I don't have real weather data, but I'd love to chat about weather patterns!",
+                            "Weather is fascinating! I wish I could check the forecast for you.",
+                            "I can't access weather APIs, but I know weather affects our mood!"
+                        ]
+                    },
+                    math: {
+                        patterns: ['calculate', 'math', 'plus', 'minus', 'multiply', 'divide', '+', '-', '*', '/'],
+                        responses: [
+                            "I can help with simple math! Try asking me something like '5 + 3'",
+                            "Math is fun! Give me a calculation to solve.",
+                            "I love numbers! What would you like me to calculate?"
+                        ]
+                    },
+                    time: {
+                        patterns: ['time', 'hour', 'minute', 'clock', 'when'],
+                        responses: [
+                            `The current time is ${new Date().toLocaleTimeString()}`,
+                            `Right now it's ${new Date().toLocaleTimeString()}`,
+                            `The time is ${new Date().toLocaleTimeString()}`
+                        ]
+                    },
+                    personal: {
+                        patterns: ['favorite', 'like', 'love', 'prefer', 'enjoy'],
+                        responses: [
+                            "I enjoy learning about human conversations! What do you like?",
+                            "I find patterns in language fascinating. What about you?",
+                            "I love helping people understand AI concepts!"
+                        ]
+                    },
+                    how_work: {
+                        patterns: ['how do you work', 'how are you made', 'explain yourself', 'ai'],
+                        responses: [
+                            "I use pattern matching to find keywords in your messages, then select appropriate responses!",
+                            "I'm built with simple ML concepts: pattern recognition and weighted responses.",
+                            "I analyze your input for keywords and use probability to choose the best response!"
+                        ]
+                    },
+                    goodbye: {
+                        patterns: ['bye', 'goodbye', 'see you', 'farewell', 'exit'],
+                        responses: [
+                            "Goodbye! Thanks for helping me learn!",
+                            "See you later! This was a great conversation.",
+                            "Farewell! I enjoyed our chat!"
+                        ]
+                    }
+                };
+                
+                // Simple learning mechanism
+                this.conversationHistory = [];
+                this.userPreferences = {};
+                this.messageCount = 1;
+            }
+            
+            // Simple tokenization (splitting text into words)
+            tokenize(text) {
+                return text.toLowerCase()
+                    .replace(/[^\w\s]/g, '')
+                    .split(/\s+/)
+                    .filter(word => word.length > 0);
+            }
+            
+            // Pattern matching with confidence scoring
+            findBestMatch(userInput) {
+                const tokens = this.tokenize(userInput);
+                const scores = {};
+                
+                // Check for math expressions first
+                const mathResult = this.handleMath(userInput);
+                if (mathResult) {
+                    return { category: 'math', response: mathResult, confidence: 95 };
+                }
+                
+                // Score each category based on keyword matches
+                for (const [category, data] of Object.entries(this.trainingData)) {
+                    scores[category] = 0;
+                    
+                    for (const pattern of data.patterns) {
+                        for (const token of tokens) {
+                            if (token.includes(pattern) || pattern.includes(token)) {
+                                scores[category] += 10;
+                            }
+                        }
+                    }
+                    
+                    // Boost score for exact matches
+                    if (data.patterns.some(pattern => userInput.toLowerCase().includes(pattern))) {
+                        scores[category] += 20;
+                    }
+                }
+                
+                // Find the category with highest score
+                const bestCategory = Object.keys(scores).reduce((a, b) => 
+                    scores[a] > scores[b] ? a : b
+                );
+                
+                if (scores[bestCategory] > 0) {
+                    const responses = this.trainingData[bestCategory].responses;
+                    const response = responses[Math.floor(Math.random() * responses.length)];
+                    const confidence = Math.min(95, scores[bestCategory] + Math.random() * 10);
+                    
+                    return { category: bestCategory, response, confidence };
+                }
+                
+                // Default response for unknown inputs
+                const defaultResponses = [
+                    "That's interesting! Can you tell me more?",
+                    "I'm still learning about that topic. What else would you like to know?",
+                    "I didn't quite understand that, but I'm always learning new things!",
+                    "Could you rephrase that? I want to make sure I understand you correctly."
+                ];
+                
+                return {
+                    category: 'unknown',
+                    response: defaultResponses[Math.floor(Math.random() * defaultResponses.length)],
+                    confidence: 25 + Math.random() * 15
+                };
+            }
+            
+            // Simple math parser
+            handleMath(input) {
+                const mathPattern = /(\d+(?:\.\d+)?)\s*([+\-*/])\s*(\d+(?:\.\d+)?)/;
+                const match = input.match(mathPattern);
+                
+                if (match) {
+                    const [, num1, operator, num2] = match;
+                    const a = parseFloat(num1);
+                    const b = parseFloat(num2);
+                    let result;
+                    
+                    switch (operator) {
+                        case '+': result = a + b; break;
+                        case '-': result = a - b; break;
+                        case '*': result = a * b; break;
+                        case '/': result = b !== 0 ? a / b : 'Cannot divide by zero!'; break;
+                        default: return null;
+                    }
+                    
+                    return `${a} ${operator} ${b} = ${result}`;
+                }
+                
+                return null;
+            }
+            
+            // Simple learning mechanism
+            learn(userInput, botResponse) {
+                this.conversationHistory.push({
+                    user: userInput,
+                    bot: botResponse,
+                    timestamp: new Date()
+                });
+                
+                // Extract and remember user preferences (very basic)
+                const tokens = this.tokenize(userInput);
+                tokens.forEach(token => {
+                    this.userPreferences[token] = (this.userPreferences[token] || 0) + 1;
+                });
+            }
+            
+            // Generate response
+            respond(userInput) {
+                const match = this.findBestMatch(userInput);
+                this.learn(userInput, match.response);
+                
+                return {
+                    response: match.response,
+                    confidence: Math.round(match.confidence),
+                    category: match.category
+                };
+            }
+        }
+        
+        // Initialize chatbot
+        const chatbot = new SimpleChatbot();
+        let messageCount = 1;
+        
+        // DOM elements
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const confidenceDisplay = document.getElementById('confidence');
+        const messageCountDisplay = document.getElementById('messageCount');
+        const typingIndicator = document.getElementById('typingIndicator');
+        
+        // Add message to chat
+        function addMessage(message, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.textContent = message;
+            
+            chatMessages.insertBefore(messageDiv, typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Show typing indicator
+        function showTyping() {
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Hide typing indicator
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+        
+        // Send message
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, true);
+            userInput.value = '';
+            messageCount++;
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                hideTyping();
+                
+                // Get bot response
+                const result = chatbot.respond(message);
+                addMessage(result.response);
+                
+                // Update UI
+                confidenceDisplay.textContent = result.confidence + '%';
+                messageCountDisplay.textContent = messageCount;
+                messageCount++;
+            }, 1000 + Math.random() * 1000);
+        }
+        
+        // Enter key support
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Auto-focus input
+        userInput.focus();
+    </script>
+</body>
+</html>
